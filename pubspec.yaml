@@ -26,8 +26,8 @@ dependencies:
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
 
-  # Network
-  dio: ^5.7.0
+  # OpenFoodFacts (SDK officiel Dart)
+  openfoodfacts: ^3.29.0
   connectivity_plus: ^6.1.0
 
   # Local Storage
@@ -65,4 +65,5 @@ flutter:
     - assets/animations/
     - assets/images/
     - assets/lottie/
+    - assets/data/
     - .env

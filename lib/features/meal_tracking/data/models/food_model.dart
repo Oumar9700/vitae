@@ -1,3 +1,4 @@
+import 'package:openfoodfacts/openfoodfacts.dart';
 import '../../domain/entities/food.dart';
 
 class FoodModel extends Food {
@@ -16,27 +17,28 @@ class FoodModel extends Food {
     super.imageUrl,
   });
 
-  factory FoodModel.fromOpenFoodFacts(Map<String, dynamic> product) {
-    final nutriments = product['nutriments'] as Map<String, dynamic>? ?? {};
+  factory FoodModel.fromProduct(Product product) {
+    final n = product.nutriments;
+
+    // Prefer kcal directly; fallback to kJ conversion (1 kcal = 4.184 kJ)
+    final kcal = n?.getValue(Nutrient.energyKCal, PerSize.oneHundredGrams);
+    final kj = n?.getValue(Nutrient.energyKJ, PerSize.oneHundredGrams);
+    final calories = kcal ?? (kj != null ? kj / 4.184 : 0.0);
 
     return FoodModel(
-      id: product['code'] ?? product['_id'] ?? '',
-      nom: product['product_name_fr'] ??
-          product['product_name'] ??
-          product['generic_name'] ??
-          'Aliment inconnu',
-      brand: product['brands'],
-      caloriesPer100g: _parseDouble(nutriments['energy-kcal_100g'] ??
-          nutriments['energy-kcal'] ??
-          nutriments['energy_100g']),
-      proteinPer100g: _parseDouble(nutriments['proteins_100g']),
-      carbsPer100g: _parseDouble(nutriments['carbohydrates_100g']),
-      fatsPer100g: _parseDouble(nutriments['fat_100g']),
-      fiberPer100g: _parseDouble(nutriments['fiber_100g']),
-      sugarPer100g: _parseDouble(nutriments['sugars_100g']),
-      sodiumPer100g: _parseSodium(nutriments),
+      id: product.barcode ?? '',
+      nom: product.getBestProductName(OpenFoodFactsLanguage.FRENCH),
+      brand: product.brands,
+      caloriesPer100g: calories,
+      proteinPer100g: n?.getValue(Nutrient.proteins, PerSize.oneHundredGrams) ?? 0.0,
+      carbsPer100g: n?.getValue(Nutrient.carbohydrates, PerSize.oneHundredGrams) ?? 0.0,
+      fatsPer100g: n?.getValue(Nutrient.fat, PerSize.oneHundredGrams) ?? 0.0,
+      fiberPer100g: n?.getValue(Nutrient.fiber, PerSize.oneHundredGrams) ?? 0.0,
+      sugarPer100g: n?.getValue(Nutrient.sugars, PerSize.oneHundredGrams) ?? 0.0,
+      // SDK returns sodium in g, convert to mg
+      sodiumPer100g: (n?.getValue(Nutrient.sodium, PerSize.oneHundredGrams) ?? 0.0) * 1000,
       source: 'openfoods',
-      imageUrl: product['image_front_url'] ?? product['image_url'],
+      imageUrl: product.imageFrontUrl ?? product.imageFrontSmallUrl,
     );
   }
 
@@ -104,14 +106,5 @@ class FoodModel extends Food {
     if (value is double) return value;
     if (value is int) return value.toDouble();
     return double.tryParse(value.toString()) ?? 0.0;
-  }
-
-  static double _parseSodium(Map<String, dynamic> nutriments) {
-    // OpenFoodFacts stores salt, sodium is salt/2.5
-    final sodium = nutriments['sodium_100g'];
-    if (sodium != null) return _parseDouble(sodium) * 1000; // convert g to mg
-    final salt = nutriments['salt_100g'];
-    if (salt != null) return _parseDouble(salt) / 2.5 * 1000;
-    return 0;
   }
 }

@@ -4,6 +4,7 @@ import '../../../../core/error/failures.dart';
 import '../../domain/entities/food.dart';
 import '../../domain/entities/meal_entry.dart';
 import '../../domain/repositories/meal_repository.dart';
+import '../datasources/ciqual_local_data_source.dart';
 import '../datasources/meal_local_data_source.dart';
 import '../datasources/meal_remote_data_source.dart';
 import '../datasources/openfoodfacts_data_source.dart';
@@ -12,14 +13,17 @@ import '../models/meal_entry_model.dart';
 
 class MealRepositoryImpl implements MealRepository {
   final MealRemoteDataSource _remote;
+  final CiqualLocalDataSource _ciqual;
   final OpenFoodFactsDataSource _openFoodFacts;
   final MealLocalDataSource _local;
 
   MealRepositoryImpl({
     required MealRemoteDataSource remote,
+    required CiqualLocalDataSource ciqual,
     required OpenFoodFactsDataSource openFoodFacts,
     required MealLocalDataSource local,
   })  : _remote = remote,
+        _ciqual = ciqual,
         _openFoodFacts = openFoodFacts,
         _local = local;
 
@@ -76,6 +80,13 @@ class MealRepositoryImpl implements MealRepository {
 
   @override
   Future<Either<Failure, List<Food>>> searchFood(String query) async {
+    // Priorité 1 : CIQUAL local (instantané, offline, valeurs officielles françaises)
+    final ciqualResults = await _ciqual.searchFood(query);
+    if (ciqualResults.isNotEmpty) {
+      return Right(ciqualResults);
+    }
+
+    // Priorité 2 : OpenFoodFacts (fallback pour produits de marque)
     try {
       final results = await _openFoodFacts.searchFood(query);
       return Right(results);

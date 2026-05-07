@@ -34,6 +34,7 @@ class _ManualInputPageState extends State<ManualInputPage> {
   Timer? _debounceTimer;
   List<Food> _searchResults = [];
   bool _isSearching = false;
+  bool _searchError = false;
 
   @override
   void dispose() {
@@ -45,16 +46,28 @@ class _ManualInputPageState extends State<ManualInputPage> {
 
   void _onSearchChanged(String query) {
     _debounceTimer?.cancel();
-    if (query.length < 2) {
+    if (query.trim().length < 3) {
       setState(() {
         _searchResults = [];
         _isSearching = false;
+        _searchError = false;
       });
       return;
     }
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      context.read<MealBloc>().add(MealFoodSearched(query));
-      setState(() => _isSearching = true);
+    _debounceTimer = Timer(
+      const Duration(milliseconds: 800),
+      () => _triggerSearch(query.trim()),
+    );
+  }
+
+  void _triggerSearch(String query) {
+    final q = query.trim();
+    if (q.length < 3) return;
+    _debounceTimer?.cancel();
+    context.read<MealBloc>().add(MealFoodSearched(q));
+    setState(() {
+      _isSearching = true;
+      _searchError = false;
     });
   }
 
@@ -134,13 +147,14 @@ class _ManualInputPageState extends State<ManualInputPage> {
             setState(() {
               _searchResults = state.foods;
               _isSearching = false;
+              _searchError = false;
             });
           }
           if (state is MealError) {
-            setState(() => _isSearching = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
-            );
+            setState(() {
+              _isSearching = false;
+              _searchError = true;
+            });
           }
         },
         child: SingleChildScrollView(
@@ -156,6 +170,8 @@ class _ManualInputPageState extends State<ManualInputPage> {
                   hint: 'Ex: Poulet, Riz, Pomme...',
                   controller: _searchCtrl,
                   prefixIcon: Icons.search_rounded,
+                  textInputAction: TextInputAction.search,
+                  onEditingComplete: () => _triggerSearch(_searchCtrl.text),
                   suffix: _isSearching
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
                       : _selectedFood != null
@@ -165,6 +181,7 @@ class _ManualInputPageState extends State<ManualInputPage> {
                                 _selectedFood = null;
                                 _searchCtrl.clear();
                                 _searchResults = [];
+                                _searchError = false;
                               }),
                             )
                           : null,
@@ -172,6 +189,22 @@ class _ManualInputPageState extends State<ManualInputPage> {
                   validator: (v) => v == null || v.isEmpty ? 'Recherche un aliment' : null,
                 ),
                 const SizedBox(height: 4),
+
+                // Inline error message for search failures
+                if (_searchError && !_isSearching)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.error),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Vérifier ta connexion et réessaie',
+                          style: AppTypography.caption.copyWith(color: AppColors.error),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 // Search results dropdown
                 if (_searchResults.isNotEmpty && _selectedFood == null)

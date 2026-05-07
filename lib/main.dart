@@ -1,10 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'firebase_options.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:openfoodfacts/openfoodfacts.dart';
 import 'di/injection_container.dart';
 import 'features/authentication/presentation/bloc/auth_bloc.dart';
+import 'firebase_options.dart';
 import 'shared/services/app_router.dart';
 import 'shared/theme/app_theme.dart';
 
@@ -13,6 +14,16 @@ void main() async {
 
   // Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // OpenFoodFacts SDK
+  OpenFoodAPIConfiguration.userAgent = UserAgent(
+    name: 'Vitae',
+    version: '1.0.0',
+    comment: 'Flutter Nutrition App',
+    url: 'https://github.com/Oumar9700',
+  );
+  OpenFoodAPIConfiguration.globalLanguages = const [OpenFoodFactsLanguage.FRENCH];
+  OpenFoodAPIConfiguration.globalCountry = OpenFoodFactsCountry.FRANCE;
 
   // Dependency injection
   await initDependencies();

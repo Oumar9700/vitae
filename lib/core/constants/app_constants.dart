@@ -3,10 +3,8 @@ abstract class AppConstants {
   static const String appName = 'Vitae';
   static const String appTagline = 'Ton Journal Nutritionnel Intelligent';
 
-  // API
-  static const String openFoodFactsBase = 'https://world.openfoodacts.org';
-  static const String openFoodFactsSearch = '/api/v0/search';
-  static const String openFoodFactsProduct = '/api/v0/product';
+  // OpenFoodFacts — configuration gérée par le SDK officiel (openfoodfacts package)
+  // Pays : France · Langue : Français · API v3
 
   // Nutrition defaults (si non connecté)
   static const int defaultCalories = 2000;
@@ -78,7 +76,7 @@ abstract class AppConstants {
   // Units
   static const List<String> foodUnits = ['g', 'ml', 'portion', 'bol', 'verre', 'tasse', 'cuillère à soupe', 'cuillère à café'];
 
-  // Network
+  // Network (Firestore / autres appels HTTP internes)
   static const int connectTimeout = 30000;
   static const int receiveTimeout = 30000;
 

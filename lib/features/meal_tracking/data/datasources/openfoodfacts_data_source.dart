@@ -1,4 +1,5 @@
-import 'package:dio/dio.dart';
+import 'dart:io';
+import 'package:openfoodfacts/openfoodfacts.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/food_model.dart';
 
@@ -8,36 +9,46 @@ abstract class OpenFoodFactsDataSource {
 }
 
 class OpenFoodFactsDataSourceImpl implements OpenFoodFactsDataSource {
-  final Dio _dio;
-
-  OpenFoodFactsDataSourceImpl({required Dio dio}) : _dio = dio;
+  static const _searchFields = [
+    ProductField.BARCODE,
+    ProductField.NAME,
+    ProductField.NAME_IN_LANGUAGES,
+    ProductField.GENERIC_NAME,
+    ProductField.BRANDS,
+    ProductField.NUTRIMENTS,
+    ProductField.SELECTED_IMAGE,
+    ProductField.IMAGE_FRONT_URL,
+    ProductField.IMAGE_FRONT_SMALL_URL,
+  ];
 
   @override
   Future<List<FoodModel>> searchFood(String query) async {
     try {
-      final response = await _dio.get(
-        'https://world.openfoodacts.org/cgi/search.pl',
-        queryParameters: {
-          'search_terms': query,
-          'search_simple': 1,
-          'action': 'process',
-          'json': 1,
-          'fields': 'code,product_name,product_name_fr,brands,nutriments,image_front_url,generic_name',
-          'page_size': 20,
-        },
+      final configuration = ProductSearchQueryConfiguration(
+        parametersList: [
+          SearchTerms(terms: [query]),
+          const PageNumber(page: 1),
+          const PageSize(size: 25),
+          SortBy(option: SortOption.POPULARITY),
+        ],
+        language: OpenFoodFactsLanguage.FRENCH,
+        country: OpenFoodFactsCountry.FRANCE,
+        fields: _searchFields,
+        version: ProductQueryVersion.v3,
       );
 
-      final products = (response.data['products'] as List<dynamic>?) ?? [];
-      return products
-          .map((p) => FoodModel.fromOpenFoodFacts(p as Map<String, dynamic>))
-          .where((f) => f.nom.isNotEmpty && f.caloriesPer100g > 0)
+      final result = await OpenFoodAPIClient.searchProducts(null, configuration);
+
+      print(  'OpenFoodFacts search result: ${result.products?.length ?? 0} products found for query "$query".');
+      print(  'First product: ${result.products?.firstOrNull?.productName ?? "No products found"}');
+      return (result.products ?? [])
+          .map((p) => FoodModel.fromProduct(p))
+          .where((f) => f.nom.isNotEmpty)
           .take(15)
           .toList();
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.connectionError) {
-        throw const NetworkException();
-      }
+    } on SocketException {
+      throw const NetworkException();
+    } catch (_) {
       throw const ServerException('Erreur de recherche d\'aliment.');
     }
   }
@@ -45,13 +56,20 @@ class OpenFoodFactsDataSourceImpl implements OpenFoodFactsDataSource {
   @override
   Future<FoodModel?> getProductByBarcode(String barcode) async {
     try {
-      final response = await _dio.get(
-        'https://world.openfoodacts.org/api/v0/product/$barcode.json',
+      final configuration = ProductQueryConfiguration(
+        barcode,
+        language: OpenFoodFactsLanguage.FRENCH,
+        country: OpenFoodFactsCountry.FRANCE,
+        fields: [ProductField.ALL],
+        version: ProductQueryVersion.v3,
       );
-      if (response.data['status'] == 0) return null;
-      final product = response.data['product'] as Map<String, dynamic>;
-      return FoodModel.fromOpenFoodFacts(product);
-    } on DioException {
+
+      final result = await OpenFoodAPIClient.getProductV3(configuration);
+      if (result.product == null) return null;
+      return FoodModel.fromProduct(result.product!);
+    } on SocketException {
+      throw const NetworkException();
+    } catch (_) {
       throw const ServerException();
     }
   }
