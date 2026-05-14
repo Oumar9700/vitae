@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../shared/constants/app_icons.dart';
 import '../../../../shared/extensions/date_extensions.dart';
+import '../../../../shared/services/app_routes.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../features/authentication/presentation/bloc/auth_bloc.dart';
 import '../../domain/entities/meal_entry.dart';
 import '../bloc/meal_bloc.dart';
+import '../widgets/advice_card.dart';
 import '../widgets/character_widget.dart';
 import '../widgets/meal_card_widget.dart';
 import '../widgets/nutrition_bars_widget.dart';
+import 'batch_meal_input_page.dart';
 import 'edit_meal_page.dart';
 import 'manual_input_page.dart';
 import 'analytics_panel.dart';
@@ -81,6 +85,18 @@ class _DashboardPageState extends State<DashboardPage> {
             builder: (_) => BlocProvider.value(
               value: ctx.read<MealBloc>(),
               child: ManualInputPage(
+                userId: authState.user.uid,
+                date: _selectedDate,
+              ),
+            ),
+          ));
+        },
+        onBatch: () {
+          Navigator.pop(ctx);
+          Navigator.push(ctx, MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: ctx.read<MealBloc>(),
+              child: BatchMealInputPage(
                 userId: authState.user.uid,
                 date: _selectedDate,
               ),
@@ -192,8 +208,8 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.person_outline_rounded),
-          onPressed: () => context.go('/settings'),
+          icon: const Icon(AppIcons.settings),
+          onPressed: () => context.go(AppRoutes.settings),
         ),
       ],
     );
@@ -325,6 +341,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       style: AppTypography.label.copyWith(color: AppColors.primary),
                     ),
                   ),
+                const SizedBox(height: 16),
+
+                // Advice card
+                const AdviceCard(),
                 const SizedBox(height: 24),
 
                 // Meals list
@@ -370,8 +390,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
 class _AddOptionsSheet extends StatelessWidget {
   final VoidCallback onManual;
+  final VoidCallback onBatch;
 
-  const _AddOptionsSheet({required this.onManual});
+  const _AddOptionsSheet({required this.onManual, required this.onBatch});
 
   @override
   Widget build(BuildContext context) {
@@ -386,17 +407,26 @@ class _AddOptionsSheet extends StatelessWidget {
             const SizedBox(height: 20),
             _optionTile(
               context,
-              icon: Icons.keyboard_outlined,
+              icon: AppIcons.food,
               color: AppColors.primary,
               title: 'Saisie manuelle',
-              subtitle: 'Recherche dans la base OpenFoodFacts',
+              subtitle: 'Rechercher un aliment dans CIQUAL / OpenFoodFacts',
               onTap: onManual,
             ),
             const SizedBox(height: 12),
             _optionTile(
               context,
-              icon: Icons.camera_alt_outlined,
+              icon: AppIcons.batch,
               color: AppColors.accent,
+              title: 'Repas complet',
+              subtitle: 'Ajouter plusieurs aliments en une fois',
+              onTap: onBatch,
+            ),
+            const SizedBox(height: 12),
+            _optionTile(
+              context,
+              icon: Icons.camera_alt_outlined,
+              color: AppColors.chartFats,
               title: 'Photo (Phase 2)',
               subtitle: 'Détection IA des aliments',
               onTap: () {

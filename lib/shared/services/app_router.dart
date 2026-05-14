@@ -8,6 +8,7 @@ import '../../features/authentication/presentation/pages/signup_page.dart';
 import '../../features/meal_tracking/presentation/bloc/meal_bloc.dart';
 import '../../features/meal_tracking/presentation/pages/dashboard_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import 'app_routes.dart';
 
 class AppRouter {
   static GoRouter router(AuthBloc authBloc) {
@@ -16,30 +17,30 @@ class AppRouter {
       redirect: (context, state) {
         final authState = authBloc.state;
         final isAuth = authState is AuthAuthenticated;
-        final isOnAuth = state.matchedLocation == '/login' ||
-            state.matchedLocation == '/signup';
+        final isOnAuth = state.matchedLocation == AppRoutes.login ||
+            state.matchedLocation == AppRoutes.signup;
 
-        if (!isAuth && !isOnAuth) return '/login';
-        if (isAuth && isOnAuth) return '/dashboard';
+        if (!isAuth && !isOnAuth) return AppRoutes.login;
+        if (isAuth && isOnAuth) return AppRoutes.dashboard;
         return null;
       },
       routes: [
         GoRoute(
-          path: '/login',
+          path: AppRoutes.login,
           builder: (context, state) => BlocProvider.value(
             value: authBloc,
             child: const LoginPage(),
           ),
         ),
         GoRoute(
-          path: '/signup',
+          path: AppRoutes.signup,
           builder: (context, state) => BlocProvider.value(
             value: authBloc,
             child: const SignupPage(),
           ),
         ),
         GoRoute(
-          path: '/dashboard',
+          path: AppRoutes.dashboard,
           builder: (context, state) => MultiBlocProvider(
             providers: [
               BlocProvider.value(value: authBloc),
@@ -49,15 +50,15 @@ class AppRouter {
           ),
         ),
         GoRoute(
-          path: '/settings',
+          path: AppRoutes.settings,
           builder: (context, state) => BlocProvider.value(
             value: authBloc,
             child: const SettingsPage(),
           ),
         ),
         GoRoute(
-          path: '/',
-          redirect: (_, __) => '/dashboard',
+          path: AppRoutes.root,
+          redirect: (_, __) => AppRoutes.dashboard,
         ),
       ],
       errorBuilder: (context, state) => Scaffold(

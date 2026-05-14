@@ -9,6 +9,8 @@ import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/meal_type_selector_widget.dart';
+import '../../../../shared/widgets/unit_example_widget.dart';
 import '../../domain/entities/food.dart';
 import '../../domain/entities/meal_entry.dart';
 import '../bloc/meal_bloc.dart';
@@ -81,22 +83,25 @@ class _ManualInputPageState extends State<ManualInputPage> {
     FocusScope.of(context).unfocus();
   }
 
-  Nutrition? get _computedNutrition {
-    if (_selectedFood == null) return null;
+  double get _qtyInGrams {
+    final qty = double.tryParse(_quantityCtrl.text.replaceAll(',', '.')) ?? 0;
+    final factor = AppConstants.unitToGrams[_selectedUnit] ?? 1.0;
+    return qty * factor;
+  }
+
+  String? get _gramEquivalentHint {
+    if (_selectedUnit == 'g' || _selectedUnit == 'ml') return null;
     final qty = double.tryParse(_quantityCtrl.text.replaceAll(',', '.')) ?? 0;
     if (qty <= 0) return null;
-    double qtyG = qty;
-    // Convert non-gram units to grams (approximation)
-    switch (_selectedUnit) {
-      case 'ml': qtyG = qty; break;
-      case 'portion': qtyG = qty * 150; break;
-      case 'bol': qtyG = qty * 250; break;
-      case 'verre': qtyG = qty * 200; break;
-      case 'tasse': qtyG = qty * 240; break;
-      case 'cuillère à soupe': qtyG = qty * 15; break;
-      case 'cuillère à café': qtyG = qty * 5; break;
-    }
-    return _selectedFood!.nutritionForQuantity(qtyG);
+    final g = _qtyInGrams;
+    return '≈ ${g.toStringAsFixed(0)} g';
+  }
+
+  Nutrition? get _computedNutrition {
+    if (_selectedFood == null) return null;
+    final g = _qtyInGrams;
+    if (g <= 0) return null;
+    return _selectedFood!.nutritionForQuantity(g);
   }
 
   void _submit() {
@@ -284,39 +289,28 @@ class _ManualInputPageState extends State<ManualInputPage> {
                     ),
                   ],
                 ),
+                // Gram equivalent hint
+                if (_gramEquivalentHint != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          _gramEquivalentHint!,
+                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                UnitExampleWidget(unit: _selectedUnit),
                 const SizedBox(height: 20),
 
-                // Meal type
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Repas', style: AppTypography.label.copyWith(color: AppColors.textPrimary)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: AppConstants.mealTypes.map((type) {
-                        final label = AppConstants.mealTypeLabels[type] ?? type;
-                        final emoji = AppConstants.mealTypeEmojis[type] ?? '';
-                        final selected = _selectedMealType == type;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedMealType = type),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: selected ? AppColors.primaryPale : AppColors.bgLight,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: selected ? 2 : 1),
-                            ),
-                            child: Text(
-                              '$emoji $label',
-                              style: AppTypography.label.copyWith(color: selected ? AppColors.primary : AppColors.textPrimary),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
+                MealTypeSelectorWidget(
+                  selected: _selectedMealType,
+                  onChanged: (t) => setState(() => _selectedMealType = t),
                 ),
                 const SizedBox(height: 24),
 

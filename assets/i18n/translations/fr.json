@@ -1,0 +1,167 @@
+{
+  "app_name": "Vitae",
+  "app_tagline": "Ton Journal Nutritionnel Intelligent",
+
+  "common": {
+    "cancel": "Annuler",
+    "save": "Sauvegarder",
+    "add": "Ajouter",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "ok": "OK",
+    "yes": "Oui",
+    "no": "Non",
+    "back": "Retour",
+    "search": "Rechercher"
+  },
+
+  "auth": {
+    "login_title": "Bienvenue",
+    "login_subtitle": "Connecte-toi à ton compte",
+    "signup_title": "Créer un compte",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "login_btn": "Se connecter",
+    "signup_btn": "Créer mon compte",
+    "logout": "Se déconnecter",
+    "logout_confirm": "Tu devras te reconnecter.",
+    "no_account": "Pas de compte ?",
+    "already_account": "Déjà un compte ?"
+  },
+
+  "dashboard": {
+    "today": "Aujourd'hui",
+    "add_meal": "Ajouter",
+    "no_meals": "Aucun repas enregistré",
+    "no_meals_hint": "Ajoute ton premier repas !",
+    "meals_of_day": "Repas du jour",
+    "view_details": "Voir les détails du jour",
+    "score_label": "Score : {score}",
+    "refresh": "Actualiser"
+  },
+
+  "add_options": {
+    "title": "Ajouter un aliment",
+    "manual": "Saisie manuelle",
+    "manual_sub": "Rechercher dans CIQUAL / OpenFoodFacts",
+    "batch": "Repas complet",
+    "batch_sub": "Ajouter plusieurs aliments en une fois",
+    "photo": "Photo (Phase 2)",
+    "photo_sub": "Détection IA des aliments",
+    "voice": "Voix (Phase 2)",
+    "voice_sub": "Dictez votre repas",
+    "phase2": "Disponible en Phase 2 🚀"
+  },
+
+  "manual_input": {
+    "title": "Ajouter un aliment",
+    "search_label": "Rechercher un aliment",
+    "search_hint": "Ex : Poulet, Riz, Pomme…",
+    "quantity_label": "Quantité",
+    "unit_label": "Unité",
+    "meal_label": "Repas",
+    "add_btn": "Ajouter au journal",
+    "select_food_error": "Sélectionne un aliment dans la liste",
+    "connection_error": "Vérifie ta connexion et réessaie",
+    "nutrition_title": "Valeurs nutritionnelles"
+  },
+
+  "batch_input": {
+    "title": "Repas complet",
+    "food_label": "Aliments",
+    "add_food": "Ajouter un aliment",
+    "total_label": "Total du repas",
+    "submit_one": "Enregistrer 1 aliment",
+    "submit_many": "Enregistrer {count} aliments"
+  },
+
+  "edit_meal": {
+    "title": "Modifier",
+    "nutrition_recalc": "Nutrition recalculée"
+  },
+
+  "settings": {
+    "title": "Profil & Réglages",
+    "calculated_needs": "Besoins calculés",
+    "metabolism": "Métabolisme",
+    "calories_day": "Calories/jour",
+    "protein": "Protéines",
+    "carbs": "Glucides",
+    "fats": "Lipides",
+    "fiber_min": "Fibres (min)",
+    "sugar_max": "Sucres (max)",
+    "sodium_max": "Sodium (max)",
+    "bmr": "BMR (base)",
+    "tdee": "TDEE (activité)",
+    "bmi": "IMC : {value} ({category})"
+  },
+
+  "nutrition_info": {
+    "how_calculated": "Comment sont calculés tes besoins ?",
+    "bmr_title": "BMR — Métabolisme de base",
+    "bmr_body": "C'est le nombre de calories que ton corps brûle au repos pour maintenir ses fonctions vitales. Calculé avec la formule Mifflin-St Jeor.",
+    "tdee_title": "TDEE — Dépense journalière totale",
+    "tdee_body": "Ton BMR × facteur d'activité (1,2 sédentaire → 1,9 très actif). Le nombre de calories pour maintenir ton poids.",
+    "goal_title": "Objectif calorique",
+    "goal_body": "Perte de poids : TDEE − 500 kcal/j. Prise de masse : TDEE + 300 kcal. Maintien : TDEE = objectif.",
+    "macros_title": "Macros recommandées",
+    "macros_body": "Protéines : 1,6–2 g/kg · Lipides : 25–35 % · Glucides : le reste. Selon recommandations ANSES 2021."
+  },
+
+  "meal_types": {
+    "petit_dejeuner": "Petit-Déjeuner",
+    "dejeuner": "Déjeuner",
+    "gouter": "Goûter",
+    "diner": "Dîner",
+    "snack": "Snack"
+  },
+
+  "units": {
+    "g": "g",
+    "ml": "ml",
+    "tranche": "tranche",
+    "portion": "portion",
+    "bol": "bol",
+    "verre": "verre",
+    "tasse": "tasse",
+    "tbsp": "cuillère à soupe",
+    "tsp": "cuillère à café"
+  },
+
+  "macros": {
+    "calories": "Calories",
+    "protein": "Protéines",
+    "carbs": "Glucides",
+    "fats": "Lipides",
+    "fiber": "Fibres",
+    "sugar": "Sucres",
+    "sodium": "Sodium"
+  },
+
+  "advice": {
+    "label": "Conseil nutrition",
+    "tips": [
+      "Boire 1,5–2 L d'eau par jour améliore ton métabolisme et ta concentration.",
+      "Les protéines favorisent la satiété : vise 1,6 g par kg de poids corporel.",
+      "Mange lentement — il faut 20 min au cerveau pour sentir la satiété.",
+      "Les fibres (légumes, légumineuses) nourrissent ton microbiote intestinal.",
+      "Préfère les glucides complexes (avoine, patate douce) aux sucres rapides.",
+      "Un petit-déjeuner riche en protéines réduit les fringales de l'après-midi.",
+      "Les graisses insaturées (avocat, noix, olive) sont essentielles au cerveau.",
+      "Manger varié est plus important que d'éviter un aliment en particulier."
+    ]
+  },
+
+  "errors": {
+    "network": "Pas de connexion Internet. Vérifie ta connexion.",
+    "server": "Erreur serveur. Réessaie dans un moment.",
+    "cache": "Impossible de lire les données locales.",
+    "auth": "Erreur d'authentification. Reconnecte-toi.",
+    "unknown": "Erreur inattendue. Contacte le support."
+  }
+}

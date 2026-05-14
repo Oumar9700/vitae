@@ -7,6 +7,7 @@ import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/meal_type_selector_widget.dart';
 import '../../domain/entities/food.dart';
 import '../../domain/entities/meal_entry.dart';
 import '../bloc/meal_bloc.dart';
@@ -158,32 +159,9 @@ class _EditMealPageState extends State<EditMealPage> {
               ),
               const SizedBox(height: 20),
 
-              // Meal type
-              Text('Repas', style: AppTypography.label.copyWith(color: AppColors.textPrimary)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AppConstants.mealTypes.map((type) {
-                  final label = AppConstants.mealTypeLabels[type] ?? type;
-                  final emoji = AppConstants.mealTypeEmojis[type] ?? '';
-                  final selected = _selectedMealType == type;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedMealType = type),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: selected ? AppColors.primaryPale : AppColors.bgLight,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: selected ? 2 : 1),
-                      ),
-                      child: Text(
-                        '$emoji $label',
-                        style: AppTypography.label.copyWith(color: selected ? AppColors.primary : AppColors.textPrimary),
-                      ),
-                    ),
-                  );
-                }).toList(),
+              MealTypeSelectorWidget(
+                selected: _selectedMealType,
+                onChanged: (t) => setState(() => _selectedMealType = t),
               ),
               const SizedBox(height: 24),
 

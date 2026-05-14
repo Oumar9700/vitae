@@ -74,7 +74,23 @@ abstract class AppConstants {
   };
 
   // Units
-  static const List<String> foodUnits = ['g', 'ml', 'portion', 'bol', 'verre', 'tasse', 'cuillère à soupe', 'cuillère à café'];
+  static const List<String> foodUnits = [
+    'g', 'ml', 'tranche', 'portion', 'bol', 'verre', 'tasse',
+    'cuillère à soupe', 'cuillère à café',
+  ];
+
+  // Conversions en grammes pour chaque unité (valeurs de référence)
+  static const Map<String, double> unitToGrams = {
+    'g': 1.0,
+    'ml': 1.0,       // approximation (eau ≈ 1g/ml)
+    'tranche': 28.0, // tranche pain/charcuterie ≈ 25-30g
+    'portion': 150.0,
+    'bol': 250.0,
+    'verre': 200.0,
+    'tasse': 240.0,
+    'cuillère à soupe': 15.0,
+    'cuillère à café': 5.0,
+  };
 
   // Network (Firestore / autres appels HTTP internes)
   static const int connectTimeout = 30000;

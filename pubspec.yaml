@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # State Management
   flutter_bloc: ^8.1.6
@@ -44,7 +46,7 @@ dependencies:
 
   # Utilities
   flutter_dotenv: ^5.2.1
-  intl: ^0.19.0
+  intl: ^0.20.2
   uuid: ^4.5.1
   dartz: ^0.10.1
 
@@ -66,4 +68,5 @@ flutter:
     - assets/images/
     - assets/lottie/
     - assets/data/
+    - assets/i18n/translations/
     - .env

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:openfoodfacts/openfoodfacts.dart';
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/services/logger_service.dart';
 import '../models/food_model.dart';
 
 abstract class OpenFoodFactsDataSource {
@@ -39,8 +40,8 @@ class OpenFoodFactsDataSourceImpl implements OpenFoodFactsDataSource {
 
       final result = await OpenFoodAPIClient.searchProducts(null, configuration);
 
-      print(  'OpenFoodFacts search result: ${result.products?.length ?? 0} products found for query "$query".');
-      print(  'First product: ${result.products?.firstOrNull?.productName ?? "No products found"}');
+      AppLogger.d('${result.products?.length ?? 0} products found for "$query"', 'OpenFoodFacts');
+      AppLogger.d('First: ${result.products?.firstOrNull?.productName ?? "none"}', 'OpenFoodFacts');
       return (result.products ?? [])
           .map((p) => FoodModel.fromProduct(p))
           .where((f) => f.nom.isNotEmpty)

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/nutrition_calculator.dart';
+import '../../../../shared/constants/app_icons.dart';
+import '../../../../shared/services/app_routes.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/custom_button.dart';
+import '../../../../shared/widgets/nutrition_info_widget.dart';
 import '../../../authentication/domain/entities/user_profile.dart';
 import '../../../authentication/presentation/bloc/auth_bloc.dart';
 
@@ -18,8 +21,8 @@ class SettingsPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('Profil & Réglages', style: AppTypography.h3),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => context.go('/dashboard'),
+          icon: const Icon(AppIcons.back, size: 20),
+          onPressed: () => context.go(AppRoutes.dashboard),
         ),
       ),
       body: BlocBuilder<AuthBloc, AuthState>(
@@ -49,6 +52,8 @@ class SettingsPage extends StatelessWidget {
                 Text('Métabolisme', style: AppTypography.h3),
                 const SizedBox(height: 12),
                 _MetabolismCard(user: user),
+                const SizedBox(height: 16),
+                const NutritionInfoWidget(),
                 const SizedBox(height: 32),
 
                 // Logout

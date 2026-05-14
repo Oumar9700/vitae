@@ -2,10 +2,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:openfoodfacts/openfoodfacts.dart';
 import 'di/injection_container.dart';
 import 'features/authentication/presentation/bloc/auth_bloc.dart';
 import 'firebase_options.dart';
+import 'i18n/app_localizations.dart';
 import 'shared/services/app_router.dart';
 import 'shared/theme/app_theme.dart';
 
@@ -74,6 +76,14 @@ class _VitaeAppState extends State<VitaeApp> {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         routerConfig: AppRouter.router(_authBloc),
+        locale: const Locale('fr'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
       ),
     );
   }

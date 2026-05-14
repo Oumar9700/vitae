@@ -1,0 +1,167 @@
+{
+  "app_name": "Vitae",
+  "app_tagline": "Your Smart Nutrition Journal",
+
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "confirm": "Confirm",
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "ok": "OK",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "search": "Search"
+  },
+
+  "auth": {
+    "login_title": "Welcome",
+    "login_subtitle": "Sign in to your account",
+    "signup_title": "Create an account",
+    "email": "Email",
+    "password": "Password",
+    "login_btn": "Sign in",
+    "signup_btn": "Create my account",
+    "logout": "Sign out",
+    "logout_confirm": "You'll need to sign in again.",
+    "no_account": "No account?",
+    "already_account": "Already have an account?"
+  },
+
+  "dashboard": {
+    "today": "Today",
+    "add_meal": "Add",
+    "no_meals": "No meals recorded",
+    "no_meals_hint": "Add your first meal!",
+    "meals_of_day": "Today's meals",
+    "view_details": "View day details",
+    "score_label": "Score: {score}",
+    "refresh": "Refresh"
+  },
+
+  "add_options": {
+    "title": "Add a food",
+    "manual": "Manual entry",
+    "manual_sub": "Search CIQUAL / OpenFoodFacts",
+    "batch": "Full meal",
+    "batch_sub": "Add several foods at once",
+    "photo": "Photo (Phase 2)",
+    "photo_sub": "AI food detection",
+    "voice": "Voice (Phase 2)",
+    "voice_sub": "Dictate your meal",
+    "phase2": "Available in Phase 2 🚀"
+  },
+
+  "manual_input": {
+    "title": "Add a food",
+    "search_label": "Search a food",
+    "search_hint": "e.g. Chicken, Rice, Apple…",
+    "quantity_label": "Quantity",
+    "unit_label": "Unit",
+    "meal_label": "Meal",
+    "add_btn": "Add to journal",
+    "select_food_error": "Select a food from the list",
+    "connection_error": "Check your connection and try again",
+    "nutrition_title": "Nutritional values"
+  },
+
+  "batch_input": {
+    "title": "Full meal",
+    "food_label": "Foods",
+    "add_food": "Add a food",
+    "total_label": "Meal total",
+    "submit_one": "Save 1 food",
+    "submit_many": "Save {count} foods"
+  },
+
+  "edit_meal": {
+    "title": "Edit",
+    "nutrition_recalc": "Recalculated nutrition"
+  },
+
+  "settings": {
+    "title": "Profile & Settings",
+    "calculated_needs": "Calculated needs",
+    "metabolism": "Metabolism",
+    "calories_day": "Calories/day",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fats": "Fats",
+    "fiber_min": "Fiber (min)",
+    "sugar_max": "Sugar (max)",
+    "sodium_max": "Sodium (max)",
+    "bmr": "BMR (base)",
+    "tdee": "TDEE (activity)",
+    "bmi": "BMI: {value} ({category})"
+  },
+
+  "nutrition_info": {
+    "how_calculated": "How are your needs calculated?",
+    "bmr_title": "BMR — Basal Metabolic Rate",
+    "bmr_body": "The calories your body burns at rest to maintain vital functions. Calculated using the Mifflin-St Jeor formula.",
+    "tdee_title": "TDEE — Total Daily Energy Expenditure",
+    "tdee_body": "Your BMR × activity factor (1.2 sedentary → 1.9 very active). The calories to maintain your weight.",
+    "goal_title": "Calorie goal",
+    "goal_body": "Weight loss: TDEE − 500 kcal/day. Muscle gain: TDEE + 300 kcal. Maintenance: TDEE = goal.",
+    "macros_title": "Recommended macros",
+    "macros_body": "Protein: 1.6–2 g/kg · Fat: 25–35 % · Carbs: the rest. Based on ANSES 2021 guidelines."
+  },
+
+  "meal_types": {
+    "petit_dejeuner": "Breakfast",
+    "dejeuner": "Lunch",
+    "gouter": "Snack",
+    "diner": "Dinner",
+    "snack": "Snack"
+  },
+
+  "units": {
+    "g": "g",
+    "ml": "ml",
+    "tranche": "slice",
+    "portion": "serving",
+    "bol": "bowl",
+    "verre": "glass",
+    "tasse": "cup",
+    "tbsp": "tablespoon",
+    "tsp": "teaspoon"
+  },
+
+  "macros": {
+    "calories": "Calories",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fats": "Fats",
+    "fiber": "Fiber",
+    "sugar": "Sugar",
+    "sodium": "Sodium"
+  },
+
+  "advice": {
+    "label": "Nutrition tip",
+    "tips": [
+      "Drinking 1.5–2 L of water a day improves your metabolism and focus.",
+      "Protein promotes satiety: aim for 1.6 g per kg of body weight.",
+      "Eat slowly — it takes the brain 20 min to feel full.",
+      "Fiber (vegetables, legumes) feeds your gut microbiome.",
+      "Choose complex carbs (oats, sweet potato) over refined sugar.",
+      "A high-protein breakfast reduces afternoon cravings.",
+      "Unsaturated fats (avocado, nuts, olive) are essential for brain health.",
+      "Eating varied is more important than avoiding any single food."
+    ]
+  },
+
+  "errors": {
+    "network": "No internet connection. Check your network.",
+    "server": "Server error. Please try again later.",
+    "cache": "Cannot read local data.",
+    "auth": "Authentication error. Please sign in again.",
+    "unknown": "Unexpected error. Contact support."
+  }
+}
