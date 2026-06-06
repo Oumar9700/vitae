@@ -42,3 +42,10 @@ class MealError extends MealState {
   @override
   List<Object?> get props => [message];
 }
+
+class MealSavedMealsLoaded extends MealState {
+  final List<SavedMeal> savedMeals;
+  const MealSavedMealsLoaded(this.savedMeals);
+  @override
+  List<Object?> get props => [savedMeals];
+}

@@ -1,19 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/constants/app_constants.dart';
-import '../../../../core/utils/validators.dart';
+import '../../../../di/injection_container.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_typography.dart';
-import '../../../../shared/widgets/custom_button.dart';
-import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/meal_type_selector_widget.dart';
-import '../../../../shared/widgets/unit_example_widget.dart';
 import '../../domain/entities/food.dart';
 import '../../domain/entities/meal_entry.dart';
+import '../../domain/entities/saved_meal.dart';
+import '../../domain/repositories/meal_repository.dart';
 import '../bloc/meal_bloc.dart';
+import 'quantity_input_page.dart';
 
 class ManualInputPage extends StatefulWidget {
   final String userId;
@@ -26,22 +24,31 @@ class ManualInputPage extends StatefulWidget {
 }
 
 class _ManualInputPageState extends State<ManualInputPage> {
-  final _formKey = GlobalKey<FormState>();
   final _searchCtrl = TextEditingController();
-  final _quantityCtrl = TextEditingController(text: '100');
 
   Food? _selectedFood;
-  String _selectedUnit = 'g';
   String _selectedMealType = 'dejeuner';
   Timer? _debounceTimer;
   List<Food> _searchResults = [];
   bool _isSearching = false;
   bool _searchError = false;
+  bool _loadingHistory = false;
+
+  List<SavedMeal> _savedMeals = [];
+  // Repas sauvegardé sélectionné dans QuantityInputPage — traité après le pop
+  SavedMeal? _pendingSavedMeal;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MealBloc>().add(MealSavedMealsRequested(widget.userId));
+    });
+  }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
-    _quantityCtrl.dispose();
     _debounceTimer?.cancel();
     super.dispose();
   }
@@ -73,65 +80,114 @@ class _ManualInputPageState extends State<ManualInputPage> {
     });
   }
 
-  void _selectFood(Food food) {
+  Future<void> _selectFood(Food food) async {
     setState(() {
       _selectedFood = food;
       _searchCtrl.text = food.nom;
       _searchResults = [];
       _isSearching = false;
+      _loadingHistory = true;
     });
     FocusScope.of(context).unfocus();
-  }
 
-  double get _qtyInGrams {
-    final qty = double.tryParse(_quantityCtrl.text.replaceAll(',', '.')) ?? 0;
-    final factor = AppConstants.unitToGrams[_selectedUnit] ?? 1.0;
-    return qty * factor;
-  }
+    final (lastGrams, lastUsedDate) =
+        await sl<MealRepository>().getFoodHistory(widget.userId, food.id);
 
-  String? get _gramEquivalentHint {
-    if (_selectedUnit == 'g' || _selectedUnit == 'ml') return null;
-    final qty = double.tryParse(_quantityCtrl.text.replaceAll(',', '.')) ?? 0;
-    if (qty <= 0) return null;
-    final g = _qtyInGrams;
-    return '≈ ${g.toStringAsFixed(0)} g';
-  }
+    if (!mounted) return;
+    setState(() => _loadingHistory = false);
 
-  Nutrition? get _computedNutrition {
-    if (_selectedFood == null) return null;
-    final g = _qtyInGrams;
-    if (g <= 0) return null;
-    return _selectedFood!.nutritionForQuantity(g);
-  }
+    double? confirmedGrams;
+    String? confirmedUnit;
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedFood == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sélectionne un aliment dans la liste')),
-      );
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (newCtx) => BlocProvider.value(
+          value: context.read<MealBloc>(),
+          child: QuantityInputPage(
+            food: food,
+            userId: widget.userId,
+            lastGrams: lastGrams,
+            lastUsedDate: lastUsedDate,
+            savedMeals: _savedMeals,
+            onConfirm: (g, u) {
+              confirmedGrams = g;
+              confirmedUnit = u;
+            },
+            onSavedMealUsed: (meal) => _pendingSavedMeal = meal,
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (_pendingSavedMeal != null) {
+      final meal = _pendingSavedMeal!;
+      _pendingSavedMeal = null;
+      _handleSavedMealUsed(meal);
       return;
     }
-    final nutrition = _computedNutrition;
-    if (nutrition == null) return;
 
+    if (confirmedGrams != null) {
+      _onQuantityConfirmed(food, confirmedGrams!, confirmedUnit ?? 'g');
+    }
+    // Si pas de confirmation → l'utilisateur a annulé, on reste sur la page
+  }
+
+  void _onQuantityConfirmed(Food food, double grams, String unit) {
     final now = DateTime.now();
     final entry = MealEntry(
       id: const Uuid().v4(),
       userId: widget.userId,
       date: widget.date,
       mealType: _selectedMealType,
-      foodName: _selectedFood!.nom,
-      quantity: double.tryParse(_quantityCtrl.text.replaceAll(',', '.')) ?? 100,
-      unit: _selectedUnit,
-      nutrition: nutrition,
+      foodName: food.nom,
+      quantity: grams,
+      unit: unit,
+      nutrition: food.nutritionForQuantity(grams),
       source: 'manuel',
-      foodId: _selectedFood!.id,
+      foodId: food.id,
       createdAt: now,
       updatedAt: now,
     );
+    context.read<MealBloc>().add(MealAddRequested(entry: entry, food: food));
+    sl<MealRepository>().saveFoodHistory(widget.userId, food.id, grams);
+    Navigator.pop(context);
+  }
 
-    context.read<MealBloc>().add(MealAddRequested(entry: entry, food: _selectedFood!));
+  void _handleSavedMealUsed(SavedMeal meal) {
+    final now = DateTime.now();
+    for (final item in meal.items) {
+      final perHundred = item.grams > 0 ? (100 / item.grams) : 1.0;
+      final reconstructedFood = Food(
+        id: item.foodId,
+        nom: item.foodName,
+        caloriesPer100g: item.nutrition.calories * perHundred,
+        proteinPer100g: item.nutrition.proteinG * perHundred,
+        carbsPer100g: item.nutrition.carbsG * perHundred,
+        fatsPer100g: item.nutrition.fatsG * perHundred,
+        fiberPer100g: item.nutrition.fiberG * perHundred,
+        sugarPer100g: item.nutrition.sugarG * perHundred,
+        sodiumPer100g: item.nutrition.sodiumMg * perHundred,
+        source: 'saved',
+      );
+      final entry = MealEntry(
+        id: const Uuid().v4(),
+        userId: widget.userId,
+        date: widget.date,
+        mealType: _selectedMealType,
+        foodName: item.foodName,
+        quantity: item.grams,
+        unit: 'g',
+        nutrition: item.nutrition,
+        source: 'repas_sauvegarde',
+        foodId: item.foodId,
+        createdAt: now,
+        updatedAt: now,
+      );
+      context.read<MealBloc>().add(MealAddRequested(entry: entry, food: reconstructedFood));
+    }
     Navigator.pop(context);
   }
 
@@ -155,6 +211,9 @@ class _ManualInputPageState extends State<ManualInputPage> {
               _searchError = false;
             });
           }
+          if (state is MealSavedMealsLoaded) {
+            setState(() => _savedMeals = state.savedMeals);
+          }
           if (state is MealError) {
             setState(() {
               _isSearching = false;
@@ -164,240 +223,139 @@ class _ManualInputPageState extends State<ManualInputPage> {
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Search field
-                VitaeTextField(
-                  label: 'Rechercher un aliment',
-                  hint: 'Ex: Poulet, Riz, Pomme...',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Meal type selector — choisi avant la recherche
+              MealTypeSelectorWidget(
+                selected: _selectedMealType,
+                onChanged: (t) => setState(() => _selectedMealType = t),
+              ),
+              const SizedBox(height: 20),
+
+              // Search field
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.bgLight,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: TextField(
                   controller: _searchCtrl,
-                  prefixIcon: Icons.search_rounded,
                   textInputAction: TextInputAction.search,
                   onEditingComplete: () => _triggerSearch(_searchCtrl.text),
-                  suffix: _isSearching
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
-                      : _selectedFood != null
-                          ? IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary),
-                              onPressed: () => setState(() {
-                                _selectedFood = null;
-                                _searchCtrl.clear();
-                                _searchResults = [];
-                                _searchError = false;
-                              }),
-                            )
-                          : null,
                   onChanged: _onSearchChanged,
-                  validator: (v) => v == null || v.isEmpty ? 'Recherche un aliment' : null,
-                ),
-                const SizedBox(height: 4),
-
-                // Inline error message for search failures
-                if (_searchError && !_isSearching)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.error),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Vérifier ta connexion et réessaie',
-                          style: AppTypography.caption.copyWith(color: AppColors.error),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Search results dropdown
-                if (_searchResults.isNotEmpty && _selectedFood == null)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.bgWhite,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: const Offset(0, 4))],
-                    ),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _searchResults.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (_, index) {
-                        final food = _searchResults[index];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          title: Text(food.nom, style: AppTypography.bodyMedium),
-                          subtitle: Text(
-                            '${food.brand ?? ''}  •  ${food.caloriesPer100g.toInt()} kcal/100g',
-                            style: AppTypography.caption,
-                          ),
-                          onTap: () => _selectFood(food),
-                        );
-                      },
-                    ),
-                  ),
-
-                const SizedBox(height: 20),
-
-                // Quantity + unit
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: VitaeTextField(
-                        label: 'Quantité',
-                        hint: '100',
-                        controller: _quantityCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                        validator: Validators.quantity,
-                        onChanged: (_) => setState(() {}),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Unité', style: AppTypography.label.copyWith(color: AppColors.textPrimary)),
-                          const SizedBox(height: 6),
-                          DropdownButtonFormField<String>(
-                            value: _selectedUnit,
-                            style: AppTypography.body,
-                            decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: AppColors.border),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: AppColors.border),
-                              ),
-                              filled: true,
-                              fillColor: AppColors.bgLight,
+                  decoration: InputDecoration(
+                    hintText: 'Rechercher un aliment (ex: Poulet, Riz…)',
+                    hintStyle: AppTypography.body.copyWith(color: AppColors.textTertiary),
+                    prefixIcon: _loadingHistory
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                             ),
-                            items: AppConstants.foodUnits.map((u) => DropdownMenuItem(value: u, child: Text(u, style: AppTypography.body))).toList(),
-                            onChanged: (v) => setState(() => _selectedUnit = v ?? 'g'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                          )
+                        : const Icon(Icons.search_rounded, color: AppColors.textSecondary),
+                    suffixIcon: _isSearching
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                            ),
+                          )
+                        : _searchCtrl.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary),
+                                onPressed: () => setState(() {
+                                  _selectedFood = null;
+                                  _searchCtrl.clear();
+                                  _searchResults = [];
+                                  _searchError = false;
+                                }),
+                              )
+                            : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                  style: AppTypography.body,
                 ),
-                // Gram equivalent hint
-                if (_gramEquivalentHint != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 4),
-                    child: Row(
+              ),
+              const SizedBox(height: 4),
+
+              // Erreur réseau
+              if (_searchError && !_isSearching)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.error),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Vérifier ta connexion et réessaie',
+                        style: AppTypography.caption.copyWith(color: AppColors.error),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Résultats de recherche
+              if (_searchResults.isNotEmpty && _selectedFood == null)
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.bgWhite,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: const Offset(0, 4))
+                    ],
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _searchResults.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, index) {
+                      final food = _searchResults[index];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        title: Text(food.nom, style: AppTypography.bodyMedium),
+                        subtitle: Text(
+                          '${food.brand ?? ''}  •  ${food.caloriesPer100g.toInt()} kcal/100g',
+                          style: AppTypography.caption,
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textTertiary),
+                        onTap: () => _selectFood(food),
+                      );
+                    },
+                  ),
+                ),
+
+              // Hint — aucune recherche encore
+              if (_searchResults.isEmpty && !_isSearching && _searchCtrl.text.length < 3)
+                Padding(
+                  padding: const EdgeInsets.only(top: 32),
+                  child: Center(
+                    child: Column(
                       children: [
-                        const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
+                        const Icon(Icons.search_rounded, size: 48, color: AppColors.textTertiary),
+                        const SizedBox(height: 8),
                         Text(
-                          _gramEquivalentHint!,
-                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                          'Tape le nom d\'un aliment\npour commencer la recherche',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
                         ),
                       ],
                     ),
                   ),
-
-                UnitExampleWidget(unit: _selectedUnit),
-                const SizedBox(height: 20),
-
-                MealTypeSelectorWidget(
-                  selected: _selectedMealType,
-                  onChanged: (t) => setState(() => _selectedMealType = t),
                 ),
-                const SizedBox(height: 24),
-
-                // Nutrition preview
-                if (_selectedFood != null && _computedNutrition != null) ...[
-                  _NutritionPreview(nutrition: _computedNutrition!, foodName: _selectedFood!.nom),
-                  const SizedBox(height: 24),
-                ],
-
-                PrimaryButton(
-                  label: 'Ajouter au journal',
-                  onPressed: _submit,
-                  icon: Icons.add_rounded,
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
+            ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _NutritionPreview extends StatelessWidget {
-  final Nutrition nutrition;
-  final String foodName;
-
-  const _NutritionPreview({required this.nutrition, required this.foodName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primaryPale,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.primaryLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Valeurs nutritionnelles', style: AppTypography.label.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700))),
-              Text(
-                '${nutrition.calories.toInt()} kcal',
-                style: AppTypography.h3.copyWith(color: AppColors.primary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _MacroChip('Protéines', nutrition.proteinG, 'g', AppColors.chartProtein),
-              _MacroChip('Glucides', nutrition.carbsG, 'g', AppColors.chartCarbs),
-              _MacroChip('Lipides', nutrition.fatsG, 'g', AppColors.chartFats),
-              _MacroChip('Fibres', nutrition.fiberG, 'g', AppColors.chartFiber),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MacroChip extends StatelessWidget {
-  final String label;
-  final double value;
-  final String unit;
-  final Color color;
-
-  const _MacroChip(this.label, this.value, this.unit, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          '${value.toStringAsFixed(1)}$unit',
-          style: AppTypography.bodyMedium.copyWith(color: color),
-        ),
-        Text(label, style: AppTypography.caption),
-      ],
     );
   }
 }

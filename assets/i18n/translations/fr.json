@@ -163,5 +163,36 @@
     "cache": "Impossible de lire les données locales.",
     "auth": "Erreur d'authentification. Reconnecte-toi.",
     "unknown": "Erreur inattendue. Contacte le support."
+  },
+
+  "quantity_input": {
+    "title": "Combien en as-tu mangé ?",
+    "subtitle": "Choisis la méthode qui te convient",
+    "suggested_portions": "Portions courantes",
+    "custom_quantity": "Quantité personnalisée",
+    "how_much": "Quelle quantité ?",
+    "how_many_containers": "Avec quel récipient ?",
+    "total": "Total",
+    "same_as": "Même quantité que",
+    "estimate_portion": "Aide à l'estimation visuelle",
+    "describe_visually": "À quoi ressemblait ta portion ?",
+    "very_small": "Très petite",
+    "small": "Petite",
+    "medium": "Moyenne",
+    "large": "Grande",
+    "very_large": "Très grande",
+    "help_estimate": "Aide à l'estimation",
+    "advanced": "Options avancées",
+    "adjust_quantity": "Ajuster la quantité",
+    "used": "utilisé",
+    "my_frequent_meals": "Repas sauvegardés",
+    "save_this_meal": "Sauvegarder ce repas",
+    "add_to_saved": "Ajouter aux favoris",
+    "confirm_btn": "Confirmer",
+    "last_time": "Dernière fois",
+    "by_size": "Par taille",
+    "size_small": "Petit",
+    "size_medium": "Moyen",
+    "size_large": "Grand"
   }
 }

@@ -63,3 +63,34 @@ class MealDateChanged extends MealEvent {
   @override
   List<Object?> get props => [date];
 }
+
+class MealSavedMealsRequested extends MealEvent {
+  final String userId;
+  const MealSavedMealsRequested(this.userId);
+  @override
+  List<Object?> get props => [userId];
+}
+
+class MealSavedMealAdded extends MealEvent {
+  final String userId;
+  final SavedMeal meal;
+  const MealSavedMealAdded({required this.userId, required this.meal});
+  @override
+  List<Object?> get props => [userId, meal.id];
+}
+
+class MealSavedMealDeleted extends MealEvent {
+  final String userId;
+  final String mealId;
+  const MealSavedMealDeleted({required this.userId, required this.mealId});
+  @override
+  List<Object?> get props => [mealId];
+}
+
+class MealSavedMealUsed extends MealEvent {
+  final String userId;
+  final String mealId;
+  const MealSavedMealUsed({required this.userId, required this.mealId});
+  @override
+  List<Object?> get props => [mealId];
+}

@@ -3,6 +3,7 @@ import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/food.dart';
 import '../../domain/entities/meal_entry.dart';
+import '../../domain/entities/saved_meal.dart';
 import '../../domain/repositories/meal_repository.dart';
 import '../datasources/ciqual_local_data_source.dart';
 import '../datasources/meal_local_data_source.dart';
@@ -139,4 +140,42 @@ class MealRepositoryImpl implements MealRepository {
       return const Left(CacheFailure());
     }
   }
+
+  @override
+  Future<(double?, DateTime?)> getFoodHistory(String userId, String foodId) =>
+      _local.getFoodHistory(userId, foodId);
+
+  @override
+  Future<void> saveFoodHistory(String userId, String foodId, double grams) =>
+      _local.saveFoodHistory(userId, foodId, grams);
+
+  @override
+  Future<Either<Failure, List<SavedMeal>>> getSavedMeals(String userId) async {
+    final meals = await _local.getSavedMeals(userId);
+    return Right(meals);
+  }
+
+  @override
+  Future<Either<Failure, void>> addSavedMeal(String userId, SavedMeal meal) async {
+    try {
+      await _local.addSavedMeal(userId, meal);
+      return const Right(null);
+    } on CacheException {
+      return const Left(CacheFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteSavedMeal(String userId, String mealId) async {
+    try {
+      await _local.deleteSavedMeal(userId, mealId);
+      return const Right(null);
+    } on CacheException {
+      return const Left(CacheFailure());
+    }
+  }
+
+  @override
+  Future<void> incrementSavedMealUsed(String userId, String mealId) =>
+      _local.incrementSavedMealUsed(userId, mealId);
 }

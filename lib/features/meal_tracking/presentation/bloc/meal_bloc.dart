@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/food.dart';
 import '../../domain/entities/meal_entry.dart';
+import '../../domain/entities/saved_meal.dart';
 import '../../domain/repositories/meal_repository.dart';
 import '../../../../core/utils/nutrition_calculator.dart';
 import '../../../../features/authentication/domain/entities/user_profile.dart';
@@ -24,6 +25,10 @@ class MealBloc extends Bloc<MealEvent, MealState> {
     on<MealFoodSearched>(_onFoodSearched);
     on<MealEntriesUpdated>(_onEntriesUpdated);
     on<MealDateChanged>(_onDateChanged);
+    on<MealSavedMealsRequested>(_onSavedMealsRequested);
+    on<MealSavedMealAdded>(_onSavedMealAdded);
+    on<MealSavedMealDeleted>(_onSavedMealDeleted);
+    on<MealSavedMealUsed>(_onSavedMealUsed);
   }
 
   void _onLoadRequested(MealLoadRequested event, Emitter<MealState> emit) async {
@@ -124,6 +129,28 @@ class MealBloc extends Bloc<MealEvent, MealState> {
       date: event.date,
       profile: event.profile,
     ));
+  }
+
+  void _onSavedMealsRequested(MealSavedMealsRequested event, Emitter<MealState> emit) async {
+    final result = await _mealRepository.getSavedMeals(event.userId);
+    result.fold(
+      (_) => emit(const MealSavedMealsLoaded([])),
+      (meals) => emit(MealSavedMealsLoaded(meals)),
+    );
+  }
+
+  void _onSavedMealAdded(MealSavedMealAdded event, Emitter<MealState> emit) async {
+    await _mealRepository.addSavedMeal(event.userId, event.meal);
+    add(MealSavedMealsRequested(event.userId));
+  }
+
+  void _onSavedMealDeleted(MealSavedMealDeleted event, Emitter<MealState> emit) async {
+    await _mealRepository.deleteSavedMeal(event.userId, event.mealId);
+    add(MealSavedMealsRequested(event.userId));
+  }
+
+  void _onSavedMealUsed(MealSavedMealUsed event, Emitter<MealState> emit) async {
+    await _mealRepository.incrementSavedMealUsed(event.userId, event.mealId);
   }
 
   @override
