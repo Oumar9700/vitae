@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../di/injection_container.dart';
 import '../../../../shared/constants/app_icons.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_typography.dart';
@@ -11,7 +12,9 @@ import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/meal_type_selector_widget.dart';
 import '../../domain/entities/food.dart';
 import '../../domain/entities/meal_entry.dart';
+import '../../domain/repositories/meal_repository.dart';
 import '../bloc/meal_bloc.dart';
+import '../widgets/batch_quantity_selector_widget.dart';
 
 /// Lets the user add several foods at once before submitting.
 /// Each row has its own food search + quantity + unit.
@@ -118,6 +121,7 @@ class _BatchMealInputPageState extends State<BatchMealInputPage> {
                       return _BatchRowWidget(
                         key: ValueKey(_rows[i].id),
                         row: _rows[i],
+                        userId: widget.userId,
                         canRemove: _rows.length > 1,
                         onRemove: () => _removeRow(i),
                         onChanged: () => setState(() {}),
@@ -164,12 +168,15 @@ class _BatchRow {
   Food? selectedFood;
   double quantity = 100;
   String unit = 'g';
+  double? lastQuantityUsed;
+  DateTime? lastUsedDate;
 }
 
 // ─── Row widget ─────────────────────────────────────────────────────────────
 
 class _BatchRowWidget extends StatefulWidget {
   final _BatchRow row;
+  final String userId;
   final bool canRemove;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
@@ -177,6 +184,7 @@ class _BatchRowWidget extends StatefulWidget {
   const _BatchRowWidget({
     super.key,
     required this.row,
+    required this.userId,
     required this.canRemove,
     required this.onRemove,
     required this.onChanged,
@@ -192,6 +200,8 @@ class _BatchRowWidgetState extends State<_BatchRowWidget> {
   Timer? _debounce;
   List<Food> _results = [];
   bool _searching = false;
+  double? _lastQuantityUsed;
+  DateTime? _lastUsedDate;
 
   @override
   void dispose() {
@@ -213,7 +223,7 @@ class _BatchRowWidgetState extends State<_BatchRowWidget> {
     });
   }
 
-  void _select(Food food) {
+  void _select(Food food) async {
     setState(() {
       widget.row.selectedFood = food;
       _searchCtrl.text = food.nom;
@@ -222,6 +232,14 @@ class _BatchRowWidgetState extends State<_BatchRowWidget> {
     });
     widget.onChanged();
     FocusScope.of(context).unfocus();
+
+    final (lastGrams, lastDate) =
+        await sl<MealRepository>().getFoodHistory(widget.userId, food.id);
+    if (!mounted) return;
+    setState(() {
+      _lastQuantityUsed = lastGrams;
+      _lastUsedDate = lastDate;
+    });
   }
 
   @override
@@ -323,54 +341,70 @@ class _BatchRowWidgetState extends State<_BatchRowWidget> {
 
             const SizedBox(height: 8),
 
-            // Quantity + unit
-            Row(
-              children: [
-                SizedBox(
-                  width: 90,
-                  child: TextField(
-                    controller: _qtyCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                    decoration: InputDecoration(
-                      labelText: 'Qté',
-                      labelStyle: AppTypography.caption,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                      filled: true,
-                      fillColor: AppColors.bgWhite,
+            // Quantity — sélecteur intelligent si aliment choisi, sinon fallback basique
+            if (widget.row.selectedFood != null)
+              BatchQuantitySelectorWidget(
+                food: widget.row.selectedFood!,
+                initialQuantity: widget.row.quantity,
+                initialUnit: widget.row.unit,
+                lastQuantityUsed: _lastQuantityUsed,
+                lastUsedDate: _lastUsedDate,
+                onChanged: (q, u) {
+                  setState(() {
+                    widget.row.quantity = q;
+                    widget.row.unit = u;
+                  });
+                  widget.onChanged();
+                },
+              )
+            else
+              Row(
+                children: [
+                  SizedBox(
+                    width: 90,
+                    child: TextField(
+                      controller: _qtyCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+                      decoration: InputDecoration(
+                        labelText: 'Qté',
+                        labelStyle: AppTypography.caption,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
+                        filled: true,
+                        fillColor: AppColors.bgWhite,
+                      ),
+                      style: AppTypography.body,
+                      onChanged: (v) {
+                        widget.row.quantity = double.tryParse(v.replaceAll(',', '.')) ?? 100;
+                        widget.onChanged();
+                      },
                     ),
-                    style: AppTypography.body,
-                    onChanged: (v) {
-                      widget.row.quantity = double.tryParse(v.replaceAll(',', '.')) ?? 100;
-                      widget.onChanged();
-                    },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: widget.row.unit,
-                    style: AppTypography.body,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                      filled: true,
-                      fillColor: AppColors.bgWhite,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: widget.row.unit,
+                      style: AppTypography.body,
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
+                        filled: true,
+                        fillColor: AppColors.bgWhite,
+                      ),
+                      items: AppConstants.foodUnits
+                          .map((u) => DropdownMenuItem(value: u, child: Text(u, style: AppTypography.body)))
+                          .toList(),
+                      onChanged: (v) {
+                        setState(() => widget.row.unit = v ?? 'g');
+                        widget.onChanged();
+                      },
                     ),
-                    items: AppConstants.foodUnits
-                        .map((u) => DropdownMenuItem(value: u, child: Text(u, style: AppTypography.body)))
-                        .toList(),
-                    onChanged: (v) {
-                      setState(() => widget.row.unit = v ?? 'g');
-                      widget.onChanged();
-                    },
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),
