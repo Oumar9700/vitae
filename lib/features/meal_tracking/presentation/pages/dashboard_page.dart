@@ -14,6 +14,9 @@ import '../widgets/advice_card.dart';
 import '../widgets/character_widget.dart';
 import '../widgets/meal_card_widget.dart';
 import '../widgets/nutrition_bars_widget.dart';
+import '../../../../di/injection_container.dart';
+import '../../../barcode_scanning/presentation/bloc/barcode_bloc.dart';
+import '../../../barcode_scanning/presentation/pages/barcode_scanner_page.dart';
 import 'batch_meal_input_page.dart';
 import 'edit_meal_page.dart';
 import 'manual_input_page.dart';
@@ -97,6 +100,21 @@ class _DashboardPageState extends State<DashboardPage> {
             builder: (_) => BlocProvider.value(
               value: ctx.read<MealBloc>(),
               child: BatchMealInputPage(
+                userId: authState.user.uid,
+                date: _selectedDate,
+              ),
+            ),
+          ));
+        },
+        onScan: () {
+          Navigator.pop(ctx);
+          Navigator.push(ctx, MaterialPageRoute(
+            builder: (newCtx) => MultiBlocProvider(
+              providers: [
+                BlocProvider(create: (_) => sl<BarcodeBloc>()),
+                BlocProvider.value(value: ctx.read<MealBloc>()),
+              ],
+              child: BarcodeScannerPage(
                 userId: authState.user.uid,
                 date: _selectedDate,
               ),
@@ -391,8 +409,13 @@ class _DashboardPageState extends State<DashboardPage> {
 class _AddOptionsSheet extends StatelessWidget {
   final VoidCallback onManual;
   final VoidCallback onBatch;
+  final VoidCallback onScan;
 
-  const _AddOptionsSheet({required this.onManual, required this.onBatch});
+  const _AddOptionsSheet({
+    required this.onManual,
+    required this.onBatch,
+    required this.onScan,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -425,16 +448,11 @@ class _AddOptionsSheet extends StatelessWidget {
             const SizedBox(height: 12),
             _optionTile(
               context,
-              icon: Icons.camera_alt_outlined,
+              icon: Icons.qr_code_scanner_rounded,
               color: AppColors.chartFats,
-              title: 'Photo (Phase 2)',
-              subtitle: 'Détection IA des aliments',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Disponible en Phase 2 🚀')),
-                );
-              },
+              title: 'Scanner un code-barres',
+              subtitle: 'Produits packagés via OpenFoodFacts',
+              onTap: onScan,
             ),
             const SizedBox(height: 12),
             _optionTile(

@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../features/authentication/data/datasources/auth_remote_data_source.dart';
+import '../features/barcode_scanning/presentation/bloc/barcode_bloc.dart';
 import '../features/authentication/data/repositories/auth_repository_impl.dart';
 import '../features/authentication/domain/repositories/auth_repository.dart';
 import '../features/authentication/presentation/bloc/auth_bloc.dart';
@@ -52,4 +53,5 @@ Future<void> initDependencies() async {
     ),
   );
   sl.registerFactory(() => MealBloc(mealRepository: sl()));
+  sl.registerFactory(() => BarcodeBloc(mealRepository: sl()));
 }
