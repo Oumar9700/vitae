@@ -19,6 +19,7 @@ class VitaeTextField extends StatefulWidget {
   final bool enabled;
   final int? maxLines;
   final FocusNode? focusNode;
+  final TextCapitalization textCapitalization;
 
   const VitaeTextField({
     super.key,
@@ -37,6 +38,7 @@ class VitaeTextField extends StatefulWidget {
     this.enabled = true,
     this.maxLines = 1,
     this.focusNode,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -59,6 +61,7 @@ class _VitaeTextFieldState extends State<VitaeTextField> {
           keyboardType: widget.keyboardType,
           obscureText: widget.obscureText ? _obscure : false,
           textInputAction: widget.textInputAction,
+          textCapitalization: widget.textCapitalization,
           onEditingComplete: widget.onEditingComplete,
           onChanged: widget.onChanged,
           inputFormatters: widget.inputFormatters,

@@ -10,6 +10,7 @@ import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/nutrition_info_widget.dart';
 import '../../../authentication/domain/entities/user_profile.dart';
 import '../../../authentication/presentation/bloc/auth_bloc.dart';
+import '../../../authentication/presentation/pages/edit_profile_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -38,8 +39,25 @@ class SettingsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile card
+                // Profile card + edit button
                 _ProfileCard(user: user),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    final authBloc = context.read<AuthBloc>();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: authBloc,
+                          child: EditProfilePage(user: user),
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(AppIcons.edit, size: 16),
+                  label: const Text('Modifier mon profil'),
+                ),
                 const SizedBox(height: 24),
 
                 // Nutrition targets

@@ -35,6 +35,9 @@ dependencies:
   # Barcode scanning (Phase 2)
   mobile_scanner: ^5.0.0
 
+  # Voice input (Phase 2)
+  speech_to_text: ^7.0.0
+
   # Local Storage
   flutter_secure_storage: ^9.2.2
   hive_flutter: ^1.1.0

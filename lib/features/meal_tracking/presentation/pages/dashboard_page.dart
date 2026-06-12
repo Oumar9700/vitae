@@ -17,6 +17,8 @@ import '../widgets/nutrition_bars_widget.dart';
 import '../../../../di/injection_container.dart';
 import '../../../barcode_scanning/presentation/bloc/barcode_bloc.dart';
 import '../../../barcode_scanning/presentation/pages/barcode_scanner_page.dart';
+import '../../../voice_input/presentation/bloc/voice_bloc.dart';
+import '../../../voice_input/presentation/pages/voice_input_page.dart';
 import 'batch_meal_input_page.dart';
 import 'edit_meal_page.dart';
 import 'manual_input_page.dart';
@@ -115,6 +117,21 @@ class _DashboardPageState extends State<DashboardPage> {
                 BlocProvider.value(value: ctx.read<MealBloc>()),
               ],
               child: BarcodeScannerPage(
+                userId: authState.user.uid,
+                date: _selectedDate,
+              ),
+            ),
+          ));
+        },
+        onVoice: () {
+          Navigator.pop(ctx);
+          Navigator.push(ctx, MaterialPageRoute(
+            builder: (newCtx) => MultiBlocProvider(
+              providers: [
+                BlocProvider(create: (_) => sl<VoiceBloc>()),
+                BlocProvider.value(value: ctx.read<MealBloc>()),
+              ],
+              child: VoiceInputPage(
                 userId: authState.user.uid,
                 date: _selectedDate,
               ),
@@ -410,11 +427,13 @@ class _AddOptionsSheet extends StatelessWidget {
   final VoidCallback onManual;
   final VoidCallback onBatch;
   final VoidCallback onScan;
+  final VoidCallback onVoice;
 
   const _AddOptionsSheet({
     required this.onManual,
     required this.onBatch,
     required this.onScan,
+    required this.onVoice,
   });
 
   @override
@@ -457,16 +476,11 @@ class _AddOptionsSheet extends StatelessWidget {
             const SizedBox(height: 12),
             _optionTile(
               context,
-              icon: Icons.mic_outlined,
+              icon: Icons.mic_rounded,
               color: AppColors.chartProtein,
-              title: 'Voix (Phase 2)',
-              subtitle: 'Dictez votre repas',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Disponible en Phase 2 🚀')),
-                );
-              },
+              title: 'Saisie vocale',
+              subtitle: 'Dictez votre repas en français',
+              onTap: onVoice,
             ),
           ],
         ),

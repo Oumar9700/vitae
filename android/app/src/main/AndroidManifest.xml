@@ -1,8 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Camera (barcode scanner) -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Microphone (voice input) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Internet (OpenFoodFacts, Firebase, online STT) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="vitae"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -47,6 +56,10 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Required for speech_to_text to discover the recognition service -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
         </intent>
     </queries>
 </manifest>
