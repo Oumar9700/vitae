@@ -136,7 +136,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 date: _selectedDate,
               ),
             ),
-          ));
+          )).then((_) {
+            if (mounted) _loadMeals();
+          });
         },
       ),
     );

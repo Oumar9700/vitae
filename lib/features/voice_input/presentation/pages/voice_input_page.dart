@@ -177,8 +177,8 @@ class _VoiceInputPageState extends State<VoiceInputPage>
     return BlocListener<VoiceBloc, VoiceState>(
       listener: (ctx, state) {
         if (state is VoicePendingConfirmation) {
-          Navigator.push(
-            context,
+          final nav = Navigator.of(context);
+          nav.push<bool>(
             MaterialPageRoute(
               builder: (_) => MultiBlocProvider(
                 providers: [
@@ -193,8 +193,13 @@ class _VoiceInputPageState extends State<VoiceInputPage>
                 ),
               ),
             ),
-          ).then((_) {
-            if (mounted) _reset();
+          ).then((saved) {
+            if (!mounted) return;
+            if (saved == true) {
+              nav.pop();
+            } else {
+              _reset();
+            }
           });
         } else if (state is VoiceError) {
           setState(() {

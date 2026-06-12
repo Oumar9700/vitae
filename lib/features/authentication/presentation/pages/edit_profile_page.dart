@@ -113,6 +113,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   void _save() {
     if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
 
     final updated = widget.user.copyWith(
       prenom:          _prenomCtrl.text.trim(),
@@ -135,14 +136,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (_, __) => _saving,
       listener: (context, state) {
-        if (_saving) {
-          setState(() => _saving = false);
-        }
+        setState(() => _saving = false);
         if (state is AuthAuthenticated) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Profil mis à jour'),
+            const SnackBar(
+              content: Text('Profil mis à jour ✓'),
               backgroundColor: AppColors.nutritionGood,
               behavior: SnackBarBehavior.floating,
             ),
@@ -371,15 +371,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 const SizedBox(height: 32),
 
                 // ── Save button ────────────────────────────────────
-                BlocBuilder<AuthBloc, AuthState>(
-                  builder: (context, state) {
-                    final loading = state is AuthLoading;
-                    return PrimaryButton(
-                      label: loading ? 'Sauvegarde…' : 'Sauvegarder',
-                      onPressed: loading ? null : _save,
-                      icon: AppIcons.save,
-                    );
-                  },
+                PrimaryButton(
+                  label: _saving ? 'Sauvegarde…' : 'Sauvegarder',
+                  onPressed: _saving ? null : _save,
+                  icon: AppIcons.save,
                 ),
                 const SizedBox(height: 24),
               ],

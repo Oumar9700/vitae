@@ -52,20 +52,23 @@ class _VoiceConfirmationPageState extends State<VoiceConfirmationPage> {
     final h = DateTime.now().hour;
     if (h >= 6 && h < 11) return 'petit_dejeuner';
     if (h >= 11 && h < 15) return 'dejeuner';
-    if (h >= 17 && h < 21) return 'diner';
-    return 'collation';
+    if (h >= 15 && h < 19) return 'gouter';
+    if (h >= 19 && h < 23) return 'diner';
+    return 'snack';
   }
 
   Future<void> _autoSearch(int index) async {
-    final result =
-        await sl<MealRepository>().searchFood(_items[index].parsed.foodName);
-    if (!mounted) return;
+    final foodName = index < _items.length ? _items[index].parsed.foodName : null;
+    if (foodName == null) return;
+    final result = await sl<MealRepository>().searchFood(foodName);
+    if (!mounted || index >= _items.length) return;
     result.fold(
       (_) => setState(() {
         _items[index] = _items[index].withFood(null);
       }),
       (foods) => setState(() {
-        _items[index] = _items[index].withFood(foods.isNotEmpty ? foods.first : null);
+        _items[index] =
+            _items[index].withFood(foods.isNotEmpty ? foods.first : null);
       }),
     );
   }
@@ -128,9 +131,7 @@ class _VoiceConfirmationPageState extends State<VoiceConfirmationPage> {
       context.read<MealBloc>().add(MealAddRequested(entry: entry, food: food));
       sl<MealRepository>().saveFoodHistory(widget.userId, food.id, grams);
     }
-    Navigator.of(context)
-      ..pop()
-      ..pop();
+    Navigator.of(context).pop(true);
   }
 
   // ── Total nutrition ────────────────────────────────────────────────────────
