@@ -75,6 +75,31 @@ class MealRepositoryImpl implements MealRepository {
   }
 
   @override
+  Future<Either<Failure, Map<DateTime, List<MealEntry>>>> getWeeklyMeals(
+      String userId, DateTime endDate) async {
+    try {
+      final days = List.generate(7, (i) {
+        final d = endDate.subtract(Duration(days: 6 - i));
+        return DateTime(d.year, d.month, d.day);
+      });
+
+      final results = await Future.wait(
+        days.map((day) => _remote.getDailyMeals(userId, day)),
+      );
+
+      final map = <DateTime, List<MealEntry>>{};
+      for (int i = 0; i < days.length; i++) {
+        map[days[i]] = results[i];
+      }
+      return Right(map);
+    } on NetworkException {
+      return const Left(NetworkFailure());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    }
+  }
+
+  @override
   Stream<List<MealEntry>> watchDailyMeals(String userId, DateTime date) {
     return _remote.watchDailyMeals(userId, date);
   }

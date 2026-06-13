@@ -22,7 +22,7 @@ import '../../../voice_input/presentation/pages/voice_input_page.dart';
 import 'batch_meal_input_page.dart';
 import 'edit_meal_page.dart';
 import 'manual_input_page.dart';
-import 'analytics_panel.dart';
+import 'analytics_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -64,14 +64,17 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _openAnalytics(BuildContext ctx, MealLoaded state) {
-    showModalBottomSheet(
-      context: ctx,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated) return;
+    Navigator.push(ctx, MaterialPageRoute(
+      builder: (_) => AnalyticsPage(
+        today: state.summary,
+        targets: state.targets,
+        userId: authState.user.uid,
+        date: state.date,
+        profile: authState.user,
       ),
-      builder: (_) => AnalyticsPanel(summary: state.summary, targets: state.targets),
-    );
+    ));
   }
 
   void _showAddOptions(BuildContext ctx) {

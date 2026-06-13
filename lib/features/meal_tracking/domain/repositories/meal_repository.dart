@@ -13,6 +13,8 @@ abstract class MealRepository {
 
   Future<Either<Failure, List<MealEntry>>> getDailyMeals(String userId, DateTime date);
 
+  Future<Either<Failure, Map<DateTime, List<MealEntry>>>> getWeeklyMeals(String userId, DateTime endDate);
+
   Stream<List<MealEntry>> watchDailyMeals(String userId, DateTime date);
 
   Future<Either<Failure, List<Food>>> searchFood(String query);

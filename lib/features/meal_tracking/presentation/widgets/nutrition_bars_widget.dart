@@ -213,7 +213,7 @@ class HealthIndicatorChip extends StatelessWidget {
             style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600),
           ),
           Text(
-            '${_formatNum(value)}${unit}/${_formatNum(max)}${unit}',
+            '${_formatNum(value)}$unit/${_formatNum(max)}$unit',
             style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
           ),
         ],
